@@ -319,6 +319,7 @@ Status LonController::ComputeControlCommand(
 
   debug->set_slope_offset_compensation(slope_offset_compensation);
 
+  // 纵向控制的加速度
   double acceleration_cmd =
       acceleration_cmd_closeloop + debug->preview_acceleration_reference() +
       lon_based_pidcontroller_conf_.enable_slope_offset() *

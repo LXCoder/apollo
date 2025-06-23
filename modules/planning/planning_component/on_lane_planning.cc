@@ -688,6 +688,7 @@ Status OnLanePlanning::Plan(
     // debug_traj.PrintToLog();
     ADEBUG << "current_time_stamp: " << current_time_stamp;
 
+    // 更新轨迹点
     last_publishable_trajectory_->PrependTrajectoryPoints(
         std::vector<TrajectoryPoint>(stitching_trajectory.begin(),
                                      stitching_trajectory.end() - 1));

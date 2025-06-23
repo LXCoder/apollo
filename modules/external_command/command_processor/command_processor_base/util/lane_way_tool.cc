@@ -41,6 +41,7 @@ LaneWayTool::LaneWayTool(const std::shared_ptr<cyber::Node> &node)
 bool LaneWayTool::ConvertToLaneWayPoint(
     const Pose &pose, apollo::routing::LaneWaypoint *lane_way_point) const {
   hdmap::LaneInfoConstPtr nearest_lane;
+  static constexpr double kMaxHeadingDiff = 1.0;
   double nearest_s;
   double nearest_l;
   common::PointENU point;
@@ -48,7 +49,7 @@ bool LaneWayTool::ConvertToLaneWayPoint(
   point.set_y(pose.y());
   if (pose.has_heading()) {
     static constexpr double kSearchRadius = 3.0;
-    static constexpr double kMaxHeadingDiff = 1.0;
+    static constexpr double kMaxHeadingDiefff = 1.0;
     // Get the lane nearest to the pose with heading check and update the lane
     // info in LaneWayPoint.
     if (nullptr == hdmap_ ||
