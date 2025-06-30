@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 /**
- * @file idm_model_task.h
+ * @file idm_model_decider.h
  **/
 
 #pragma once
@@ -25,43 +25,47 @@
 #include <string>
 
 #include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
-// #include "modules/planning/tasks/idm_model/proto/idm_model_task.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_task.pb.h"
+// #include "modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
 
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
 #include "modules/planning/planning_interface_base/task_base/common/speed_optimizer.h"
 #include "modules/planning/planning_interface_base/task_base/task.h"
 
+using apollo::common::Status;
+
 namespace apollo {
 namespace planning {
 
-class IDMModelTask : public SpeedOptimizer {
+class IDMModelDecider : public SpeedOptimizer {
  public:
   bool Init(const std::string& config_dir, const std::string& name,
             const std::shared_ptr<DependencyInjector>& injector) override;
 
-  common::Status Execute(Frame* frame,
-                         ReferenceLineInfo* reference_line_info) override;
+  Status Execute(Frame* frame, ReferenceLineInfo* reference_line_info) override;
 
-  virtual common::Status Process(const PathData& path_data,
-                                 const common::TrajectoryPoint& init_point,
-                                 SpeedData* const speed_data) override;
+  virtual Status Process(const PathData& path_data,
+                         const common::TrajectoryPoint& init_point,
+                         SpeedData* const speed_data) override;
 
  private:
-  double CalculateIDMModel(double ego_speed, double front_vehicle_speed,
-                           double front_vehicle_distance);
+  bool InitPointIsCollision();
 
   inline double CalculateScalarVelocity(double vx, double vy) {
     return std::sqrt(vx * vx + vy * vy);
   };
 
  private:
-  IDMModelTaskConfig config_;
+  IDMModelDeciderConfig config_;
   Frame* frame_;
+  ReferenceLineInfo* reference_line_info_;
+  double total_length_t_ = 0.0;
+  double unit_t_ = 0.0;
+  uint32_t dimension_t_ = 0;
 };
 
-CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::IDMModelTask,
+CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::IDMModelDecider,
                                      apollo::planning::Task)
 }  // namespace planning
 }  // namespace apollo

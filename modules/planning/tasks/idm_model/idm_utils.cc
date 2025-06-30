@@ -7,9 +7,10 @@
 #include <limits>
 #include <memory>
 
+// #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/perception_msgs/perception_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_task.pb.h"
+// #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
+// #include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
 
 #include "modules/common/configs/vehicle_config_helper.h"
 #include "modules/common/math/box2d.h"
@@ -59,8 +60,8 @@ int GetTwoBoxNearstDis(const Box2d& box1, const Box2d& box2,
 int SelectCIPVFromObstacles(
     const localization::Pose& ego_pose,
     const std::shared_ptr<prediction::PredictionObstacles>& prediction,
-    double search_distance, prediction::PredictionObstacle* cipv_vehicle,
-    double* distance) {
+    double search_lane_distance, double search_lane_depth,
+    prediction::PredictionObstacle* cipv_vehicle, double* distance) {
   if (prediction->prediction_obstacle_size() == 0) {
     AWARN << "prediction obstacles is empty";
     return -1;
@@ -80,7 +81,7 @@ int SelectCIPVFromObstacles(
   double ego_nearest_s = 0.0, ego_nearest_l = 0.0;
 
   if (hdmap_ptr->GetNearestLaneWithDistance(ego_pose.position(),
-                                            search_distance, &ego_lane_ptr,
+                                            search_lane_distance, &ego_lane_ptr,
                                             &ego_nearest_s, &ego_nearest_l) ||
       !ego_lane_ptr->IsOnLane(ego_bbox)) {
     AWARN << "Failed to find the lane where the ego is located";
@@ -113,7 +114,7 @@ int SelectCIPVFromObstacles(
         {obs_pos.x(), obs_pos.y()}, obs.theta(), obs.length(), obs.width());
 
     if (hdmap_ptr->GetNearestLaneWithDistance(
-            obs_pos, search_distance, &lane_ptr, &nearest_s, &nearest_l) ||
+            obs_pos, search_lane_distance, &lane_ptr, &nearest_s, &nearest_l) ||
         !lane_ptr->IsOnLane(obs_bbox)) {
       continue;
     }
@@ -123,7 +124,8 @@ int SelectCIPVFromObstacles(
         continue;
       }
     } else {
-      if (!IsSuccessorLane(hdmap_ptr, ego_lane_ptr, lane_ptr, 2)) {
+      if (!IsSuccessorLane(hdmap_ptr, ego_lane_ptr, lane_ptr,
+                           search_lane_depth)) {
         continue;
       }
     }
@@ -177,7 +179,7 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
   return false;
 }
 
-double CalculateIDMModel(const IDMModelTaskConfig& config, double ego_speed,
+double CalculateIDMModel(const IDMModelDeciderConfig& config, double ego_speed,
                          double front_vehicle_speed,
                          double front_vehicle_distance) {
   // 计算相对速度
@@ -200,29 +202,52 @@ double CalculateIDMModel(const IDMModelTaskConfig& config, double ego_speed,
   return acceleration;
 }
 
-std::vector<State> PredictNonUniformAcceleration(
-    const IDMModelTaskConfig& config, double v0, double s0, double a0,
+std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
+    const IDMModelDeciderConfig& config, double v0, double s0, double a0,
     double dt, int dt_steps, double cipv_speed, double car_distance) {
-  std::vector<State> trajectory;
-  trajectory.push_back({0.0, 0.0, 0.0});
+  // std::vector<State> trajectory;
+  std::vector<common::SpeedPoint> speed_profile;
+
+  common::SpeedPoint init_point;
+  init_point.set_t(0.0);
+  init_point.set_s(0.0);
+  init_point.set_v(v0);
+  speed_profile.push_back(init_point);
+  // trajectory.push_back({0.0, 0.0, 0.0});
+
   double v = v0;
   double s = s0;
   double a = a0;
 
-  for (size_t i = 1; i < dt_steps; ++i) {
+  for (size_t i = 1; i < dt_steps - 1; ++i) {
     // double a = accelerations[i];
     double t = i * dt;
     // 更新速度 & 位置
     a = CalculateIDMModel(config, v, cipv_speed, car_distance - s);
-    v += a * dt;
+    printf("idm acc:%.8f\n", a);
+    // v += a * dt;
+    // // s += std::min(0.0, v * dt + 0.5 * a * dt * dt);
+    // s += v * dt + 0.5 * a * dt * dt;
     s += v * dt + 0.5 * a * dt * dt;
+    v += a * dt;
+
     car_distance += cipv_speed * dt;
-    trajectory.push_back({t, v, s});
+
+    common::SpeedPoint speed_point;
+    speed_point.set_t(t);
+    speed_point.set_s(s);
+    speed_point.set_v(v);
+    speed_profile.push_back(speed_point);
+    // trajectory.push_back({t, v, s});
   }
 
   // 末尾再推一个点
-  // trajectory.push_back({accelerations.size() * dt, v, s});
-  return trajectory;
+  common::SpeedPoint speed_point;
+  speed_point.set_t(dt_steps * dt);
+  speed_point.set_s(s + speed_profile.back().v() * dt);
+  speed_point.set_v(0.0);
+  speed_profile.push_back(speed_point);
+  return speed_profile;
 }
 
 }  // namespace apollo::planning

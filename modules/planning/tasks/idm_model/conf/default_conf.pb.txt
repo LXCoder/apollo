@@ -1,6 +1,7 @@
 expect_speed: 11.18
-delta_acceleration: 4.0
-max_acceleration: 1.0
+delta_acceleration: 2.0
+max_acceleration: 3.0
 comfortable_deceleration: 2.0
-saft_distance: 1.5
+saft_distance: 2.5
 min_saft_distance: 2.0
+enable_idm: true
