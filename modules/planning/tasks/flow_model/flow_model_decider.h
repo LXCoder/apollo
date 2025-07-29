@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 /**
- * @file idm_model_decider.h
+ * @file flow_model_decider.h
  **/
 
 #pragma once
@@ -25,8 +25,7 @@
 #include <string>
 
 #include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
-// #include "modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/flow_model/proto/flow_model_decider.pb.h"
 
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
@@ -38,7 +37,7 @@ using apollo::common::Status;
 namespace apollo {
 namespace planning {
 
-class IDMModelDecider : public SpeedOptimizer {
+class FlowModelDecider : public SpeedOptimizer {
  public:
   bool Init(const std::string& config_dir, const std::string& name,
             const std::shared_ptr<DependencyInjector>& injector) override;
@@ -57,7 +56,7 @@ class IDMModelDecider : public SpeedOptimizer {
   };
 
  private:
-  IDMModelDeciderConfig config_;
+  FlowModelDeciderConfig config_;
   Frame* frame_;
   ReferenceLineInfo* reference_line_info_;
   double total_length_t_ = 0.0;
@@ -65,7 +64,7 @@ class IDMModelDecider : public SpeedOptimizer {
   uint32_t dimension_t_ = 0;
 };
 
-CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::IDMModelDecider,
+CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::FlowModelDecider,
                                      apollo::planning::Task)
 }  // namespace planning
 }  // namespace apollo

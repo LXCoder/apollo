@@ -86,3 +86,11 @@ modules/studio_connector
 
 #WORKSPACE
 dev
+.aem/*
+__MACOSX/*
+dumps
+modules/perception/data/params/*.yaml
+modules/perception/data/models/*.yaml
+modules/drivers/lidar/velodyne/params/*.yaml
+modules/localization/msf/params/velodyne_params/*.yaml
+modules/perception/data/models/*

@@ -1,16 +1,13 @@
 
 
-#include "modules/planning/tasks/idm_model/idm_utils.h"
+#include "modules/planning/tasks/flow_model/idm_utils.h"
 
 #include <climits>
 #include <cmath>
 #include <limits>
 #include <memory>
 
-// #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/perception_msgs/perception_obstacle.pb.h"
-// #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-// #include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
 
 #include "modules/common/configs/vehicle_config_helper.h"
 #include "modules/common/math/box2d.h"
@@ -179,7 +176,7 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
   return false;
 }
 
-double CalculateIDMModel(const IDMModelDeciderConfig& config, double ego_speed,
+double CalculateIDMModel(const FlowModelDeciderConfig& config, double ego_speed,
                          double front_vehicle_speed,
                          double front_vehicle_distance) {
   // 计算相对速度
@@ -203,7 +200,7 @@ double CalculateIDMModel(const IDMModelDeciderConfig& config, double ego_speed,
 }
 
 std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const IDMModelDeciderConfig& config, double v0, double s0, double a0,
+    const FlowModelDeciderConfig& config, double v0, double s0, double a0,
     double dt, int dt_steps, double cipv_speed, double car_distance) {
   // std::vector<State> trajectory;
   std::vector<common::SpeedPoint> speed_profile;

@@ -5,8 +5,8 @@ load("//tools:cpplint.bzl", "cpplint")
 package(default_visibility = ["//visibility:public"])
 
 proto_library(
-    name = "idm_model_decider_proto",
-    srcs = ["idm_model_decider.proto"],
+    name = "flow_model_decider_proto",
+    srcs = ["flow_model_decider.proto"],
 )
 
 apollo_package()

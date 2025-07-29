@@ -1,3 +1,0 @@
-<library path="modules/planning/tasks/idm_model/libidm_model_decider.so">
-  <class type="apollo::planning::IDMModelDecider" base_class="apollo::planning::Task"></class>
-</library>

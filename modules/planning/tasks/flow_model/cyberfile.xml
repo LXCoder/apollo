@@ -1,8 +1,8 @@
 <package>
-  <name>planning-task-idm-model</name>
+  <name>planning-task-flow-model</name>
   <version>local</version>
   <description>
-    planning-task-idm-model task
+    planning-task-flow-model task
   </description>
   <maintainer email="sample@sample.com">Apollo Developer</maintainer>
   <license>Apache License 2.0</license>
@@ -11,7 +11,7 @@
   <url type="bugtracker">https://github.com/ApolloAuto/apollo/issues</url>
 
   <type>module</type>
-  <src_path>//modules/planning/tasks/idm_model</src_path>
+  <src_path>//modules/planning/tasks/flow_model</src_path>
   <builder>bazel</builder>
 
   <depend>bazel-extend-tools</depend>

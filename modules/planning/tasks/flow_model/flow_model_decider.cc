@@ -15,10 +15,10 @@
  *****************************************************************************/
 
 /**
- * @file idm_model_decider.cc
+ * @file flow_model_decider.cc
  **/
 
-#include "modules/planning/tasks/idm_model/idm_model_decider.h"
+#include "modules/planning/tasks/flow_model/flow_model_decider.h"
 
 #include <algorithm>
 #include <cmath>
@@ -39,7 +39,7 @@
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/localization_msgs/pose.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/perception_msgs/perception_obstacle.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/idm_model/proto/idm_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/flow_model/proto/flow_model_decider.pb.h"
 
 #include "modules/common/util/point_factory.h"
 #include "modules/map/hdmap/hdmap.h"
@@ -51,13 +51,14 @@ using apollo::common::util::PointFactory;
 namespace apollo {
 namespace planning {
 
-bool IDMModelDecider::Init(const std::string& config_dir, const std::string& name,
-                        const std::shared_ptr<DependencyInjector>& injector) {
+bool FlowModelDecider::Init(
+    const std::string& config_dir, const std::string& name,
+    const std::shared_ptr<DependencyInjector>& injector) {
   if (!SpeedOptimizer::Init(config_dir, name, injector)) {
     return false;
   }
   // To be implemented.
-  bool flag = SpeedOptimizer::LoadConfig<IDMModelDeciderConfig>(&config_);
+  bool flag = SpeedOptimizer::LoadConfig<FlowModelDeciderConfig>(&config_);
   unit_t_ = config_.unit_t();
   printf("%s\n", config_.Utf8DebugString().c_str());
 
@@ -66,8 +67,8 @@ bool IDMModelDecider::Init(const std::string& config_dir, const std::string& nam
   return flag;
 }
 
-Status IDMModelDecider::Execute(Frame* frame,
-                             ReferenceLineInfo* reference_line_info) {
+Status FlowModelDecider::Execute(Frame* frame,
+                                ReferenceLineInfo* reference_line_info) {
   // To be implemented.
   printf("is near destination: %d\n", frame->is_near_destination());
   if (!config_.enable_idm() || frame->is_near_destination()) {
@@ -84,9 +85,9 @@ Status IDMModelDecider::Execute(Frame* frame,
   return ret;
 }
 
-Status IDMModelDecider::Process(const PathData& path_data,
-                             const common::TrajectoryPoint& init_point,
-                             SpeedData* const speed_data) {
+Status FlowModelDecider::Process(const PathData& path_data,
+                                const common::TrajectoryPoint& init_point,
+                                SpeedData* const speed_data) {
   if (InitPointIsCollision()) {
     dimension_t_ = static_cast<uint32_t>(std::ceil(
                        total_length_t_ / static_cast<double>(unit_t_))) +
@@ -132,6 +133,7 @@ Status IDMModelDecider::Process(const PathData& path_data,
 
   auto speed_profile = PredictNonUniformAcceleration(
       config_, ego_speed, 0, 0, unit_t_, dimension_t_, cipv_speed, distance);
+  AINFO<<"idm size: "<< speed_profile.size()<<", speed data size: "<< speed_data->size();
   printf("idm size: %d, speed data size: %d\n", speed_profile.size(),
          speed_data->size());
   for (int i = 0, n = std::min(speed_profile.size(), speed_data->size()); i < n;
@@ -147,7 +149,7 @@ Status IDMModelDecider::Process(const PathData& path_data,
   return Status::OK();
 }
 
-bool IDMModelDecider::InitPointIsCollision() {
+bool FlowModelDecider::InitPointIsCollision() {
   static constexpr double kBounadryEpsilon = 1e-2;
   for (const auto& boundary :
        reference_line_info_->st_graph_data().st_boundaries()) {

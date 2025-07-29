@@ -2,7 +2,7 @@ syntax = "proto2";
 
 package apollo.planning;
 
-message IDMModelDeciderConfig {
+message FlowModelDeciderConfig {
     optional bool enable_idm = 1 [default = false];
     optional double unit_t = 2 [default = 1.0];
     optional double search_lane_distance = 3 [default = 5.0];   
