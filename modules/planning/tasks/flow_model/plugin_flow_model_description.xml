@@ -1,3 +1,0 @@
-<library path="modules/planning/tasks/flow_model/libflow_model_decider.so">
-  <class type="apollo::planning::FlowModelDecider" base_class="apollo::planning::Task"></class>
-</library>

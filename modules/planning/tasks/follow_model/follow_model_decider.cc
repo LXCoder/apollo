@@ -15,10 +15,10 @@
  *****************************************************************************/
 
 /**
- * @file flow_model_decider.cc
+ * @file follow_model_decider.cc
  **/
 
-#include "modules/planning/tasks/flow_model/flow_model_decider.h"
+#include "modules/planning/tasks/follow_model/follow_model_decider.h"
 
 #include <algorithm>
 #include <cmath>
@@ -39,7 +39,7 @@
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/localization_msgs/pose.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/perception_msgs/perception_obstacle.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/flow_model/proto/flow_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "modules/common/util/point_factory.h"
 #include "modules/map/hdmap/hdmap.h"
@@ -51,14 +51,14 @@ using apollo::common::util::PointFactory;
 namespace apollo {
 namespace planning {
 
-bool FlowModelDecider::Init(
+bool FollowModelDecider::Init(
     const std::string& config_dir, const std::string& name,
     const std::shared_ptr<DependencyInjector>& injector) {
   if (!SpeedOptimizer::Init(config_dir, name, injector)) {
     return false;
   }
   // To be implemented.
-  bool flag = SpeedOptimizer::LoadConfig<FlowModelDeciderConfig>(&config_);
+  bool flag = SpeedOptimizer::LoadConfig<FollowModelConfig>(&config_);
   unit_t_ = config_.unit_t();
   printf("%s\n", config_.Utf8DebugString().c_str());
 
@@ -67,7 +67,7 @@ bool FlowModelDecider::Init(
   return flag;
 }
 
-Status FlowModelDecider::Execute(Frame* frame,
+Status FollowModelDecider::Execute(Frame* frame,
                                 ReferenceLineInfo* reference_line_info) {
   // To be implemented.
   printf("is near destination: %d\n", frame->is_near_destination());
@@ -85,7 +85,7 @@ Status FlowModelDecider::Execute(Frame* frame,
   return ret;
 }
 
-Status FlowModelDecider::Process(const PathData& path_data,
+Status FollowModelDecider::Process(const PathData& path_data,
                                 const common::TrajectoryPoint& init_point,
                                 SpeedData* const speed_data) {
   if (InitPointIsCollision()) {
@@ -149,7 +149,7 @@ Status FlowModelDecider::Process(const PathData& path_data,
   return Status::OK();
 }
 
-bool FlowModelDecider::InitPointIsCollision() {
+bool FollowModelDecider::InitPointIsCollision() {
   static constexpr double kBounadryEpsilon = 1e-2;
   for (const auto& boundary :
        reference_line_info_->st_graph_data().st_boundaries()) {

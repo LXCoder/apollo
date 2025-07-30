@@ -11,7 +11,7 @@
   <url type="bugtracker">https://github.com/ApolloAuto/apollo/issues</url>
 
   <type>module</type>
-  <src_path>//modules/planning/tasks/flow_model</src_path>
+  <src_path>//modules/planning/tasks/follow_model</src_path>
   <builder>bazel</builder>
 
   <depend>bazel-extend-tools</depend>

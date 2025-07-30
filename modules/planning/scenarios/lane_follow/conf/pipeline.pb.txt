@@ -35,6 +35,10 @@ stage: {
     type: "PathTimeHeuristicOptimizer"
   }
   task {
+    name: "Follow_MODEL"
+    type: "FollowModelDecider"
+  }
+  task {
     name: "SPEED_DECIDER"
     type: "SpeedDecider"
   }

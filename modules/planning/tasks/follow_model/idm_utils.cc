@@ -1,6 +1,6 @@
 
 
-#include "modules/planning/tasks/flow_model/idm_utils.h"
+#include "modules/planning/tasks/follow_model/idm_utils.h"
 
 #include <climits>
 #include <cmath>
@@ -176,7 +176,7 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
   return false;
 }
 
-double CalculateIDMModel(const FlowModelDeciderConfig& config, double ego_speed,
+double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
                          double front_vehicle_speed,
                          double front_vehicle_distance) {
   // 计算相对速度
@@ -200,7 +200,7 @@ double CalculateIDMModel(const FlowModelDeciderConfig& config, double ego_speed,
 }
 
 std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const FlowModelDeciderConfig& config, double v0, double s0, double a0,
+    const FollowModelConfig& config, double v0, double s0, double a0,
     double dt, int dt_steps, double cipv_speed, double car_distance) {
   // std::vector<State> trajectory;
   std::vector<common::SpeedPoint> speed_profile;

@@ -8,7 +8,7 @@
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/localization_msgs/pose.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/flow_model/proto/flow_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "modules/common/math/box2d.h"
 #include "modules/map/hdmap/hdmap.h"
@@ -36,12 +36,12 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
                      const hdmap::LaneInfoConstPtr& current_lane,
                      const hdmap::LaneInfoConstPtr& other_lane, int depth);
 
-double CalculateIDMModel(const FlowModelDeciderConfig& config, double ego_speed,
+double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
                          double front_vehicle_speed,
                          double front_vehicle_distance);
 
 std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const FlowModelDeciderConfig& config, double v0, double s0, double a0,
+    const FollowModelConfig& config, double v0, double s0, double a0,
     double dt, int dt_steps, double cipv_speed, double car_distance);
 
 }  // namespace apollo::planning

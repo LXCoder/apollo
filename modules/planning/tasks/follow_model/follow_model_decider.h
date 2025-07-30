@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 /**
- * @file flow_model_decider.h
+ * @file follow_model_decider.h
  **/
 
 #pragma once
@@ -25,7 +25,7 @@
 #include <string>
 
 #include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/flow_model/proto/flow_model_decider.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
@@ -37,7 +37,7 @@ using apollo::common::Status;
 namespace apollo {
 namespace planning {
 
-class FlowModelDecider : public SpeedOptimizer {
+class FollowModelDecider : public SpeedOptimizer {
  public:
   bool Init(const std::string& config_dir, const std::string& name,
             const std::shared_ptr<DependencyInjector>& injector) override;
@@ -56,7 +56,7 @@ class FlowModelDecider : public SpeedOptimizer {
   };
 
  private:
-  FlowModelDeciderConfig config_;
+  FollowModelConfig config_;
   Frame* frame_;
   ReferenceLineInfo* reference_line_info_;
   double total_length_t_ = 0.0;
@@ -64,7 +64,7 @@ class FlowModelDecider : public SpeedOptimizer {
   uint32_t dimension_t_ = 0;
 };
 
-CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::FlowModelDecider,
+CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::FollowModelDecider,
                                      apollo::planning::Task)
 }  // namespace planning
 }  // namespace apollo
