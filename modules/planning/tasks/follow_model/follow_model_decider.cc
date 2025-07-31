@@ -22,7 +22,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <limits>
@@ -30,6 +29,9 @@
 #include <string>
 #include <vector>
 
+#include "follow_model_base.h"
+#include "follow_model_factory.h"
+#include "follow_model_idm.h"
 #include "google/protobuf/message.h"
 #include "idm_utils.h"
 
@@ -60,15 +62,16 @@ bool FollowModelDecider::Init(
   // To be implemented.
   bool flag = SpeedOptimizer::LoadConfig<FollowModelConfig>(&config_);
   unit_t_ = config_.unit_t();
-  printf("%s\n", config_.Utf8DebugString().c_str());
 
+  REGISTER_MODEL_TO_FACTORY(FollowModelBase, FollowModelIDM,
+                            CarFollowModel_Type_Name(CarFollowModel::IDM));
   // Load the config.
   // return SpeedOptimizer::LoadConfig<IDMModelDeciderConfig>(&config_);
   return flag;
 }
 
 Status FollowModelDecider::Execute(Frame* frame,
-                                ReferenceLineInfo* reference_line_info) {
+                                   ReferenceLineInfo* reference_line_info) {
   // To be implemented.
   printf("is near destination: %d\n", frame->is_near_destination());
   if (!config_.enable_idm() || frame->is_near_destination()) {
@@ -86,8 +89,8 @@ Status FollowModelDecider::Execute(Frame* frame,
 }
 
 Status FollowModelDecider::Process(const PathData& path_data,
-                                const common::TrajectoryPoint& init_point,
-                                SpeedData* const speed_data) {
+                                   const common::TrajectoryPoint& init_point,
+                                   SpeedData* const speed_data) {
   if (InitPointIsCollision()) {
     dimension_t_ = static_cast<uint32_t>(std::ceil(
                        total_length_t_ / static_cast<double>(unit_t_))) +
@@ -133,7 +136,8 @@ Status FollowModelDecider::Process(const PathData& path_data,
 
   auto speed_profile = PredictNonUniformAcceleration(
       config_, ego_speed, 0, 0, unit_t_, dimension_t_, cipv_speed, distance);
-  AINFO<<"idm size: "<< speed_profile.size()<<", speed data size: "<< speed_data->size();
+  AINFO << "idm size: " << speed_profile.size()
+        << ", speed data size: " << speed_data->size();
   printf("idm size: %d, speed data size: %d\n", speed_profile.size(),
          speed_data->size());
   for (int i = 0, n = std::min(speed_profile.size(), speed_data->size()); i < n;

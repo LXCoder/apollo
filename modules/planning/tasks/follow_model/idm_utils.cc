@@ -11,8 +11,10 @@
 
 #include "modules/common/configs/vehicle_config_helper.h"
 #include "modules/common/math/box2d.h"
+#include "modules/map/hdmap/hdmap_util.h"
 
-namespace apollo::planning {
+namespace apollo {
+namespace planning {
 int GetDisBetweenPointToSegment(const Point2D& point, const Point2D& line_p1,
                                 const Point2D& line_p2, double* dis) {
   if (dis) {
@@ -200,8 +202,8 @@ double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
 }
 
 std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const FollowModelConfig& config, double v0, double s0, double a0,
-    double dt, int dt_steps, double cipv_speed, double car_distance) {
+    const FollowModelConfig& config, double v0, double s0, double a0, double dt,
+    int dt_steps, double cipv_speed, double car_distance) {
   // std::vector<State> trajectory;
   std::vector<common::SpeedPoint> speed_profile;
 
@@ -247,4 +249,5 @@ std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
   return speed_profile;
 }
 
-}  // namespace apollo::planning
+}  // namespace planning
+}  // namespace apollo

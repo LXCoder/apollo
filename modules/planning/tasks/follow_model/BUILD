@@ -12,8 +12,8 @@ filegroup(
 
 apollo_plugin(
     name = "libfollow_model_decider.so",
-    srcs = ["follow_model_decider.cc", "idm_utils.cc"],
-    hdrs = ["follow_model_decider.h", "idm_utils.h"],
+    srcs = ["follow_model_decider.cc", "idm_utils.cc","follow_model_base.cc","follow_model_idm.cc"],
+    hdrs = ["follow_model_decider.h", "idm_utils.h","follow_model_base.h","follow_model_idm.h","follow_model_factory.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     description = ":plugin_follow_model_description.xml",
     deps = [

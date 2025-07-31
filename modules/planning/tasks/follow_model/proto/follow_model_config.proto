@@ -2,15 +2,51 @@ syntax = "proto2";
 
 package apollo.planning;
 
+
+message ModelParameter{
+    // all model
+    required double min_gap = 1;            // 最小安全距离 (s) >= 0
+    required double accel = 2;              // 加速度能力 (m/s²) >= 0
+    required double decel = 3;              // 减速度能力 (m/s²) >= 0
+    required double emergency_decel = 4;    // 紧急情况减速度能力 (m/s²) >= decel
+    required double expect_speed = 5;       // 期望速度 (m/s), default： 当前道路的限速
+    required double tau = 6;                // 安全时距 (s)  >= 0
+
+    // IDM,EIDM
+    optional double delta = 20 [ default = 4 ];      // 加速度指数
+    optional double stepping = 21 [default = 0.25];  // 计算跟随速度时的内部步长 (s) >= 0
+    // IDMM
+    optional double adapt_factor = 22 [ default = 1.8 ];    // 适应因子，对过去交通状况变化的敏感程度 >= 0
+    optional double adapt_time = 23 [default = 600];        // 驾驶员行为恢复正常（从适应状态缓慢回归）的时间窗口 (s) >= 0
+
+}
+
+
+message CarFollowModel{
+    enum Type{
+        CUSTOM = 0; // 自定义模型
+        IDM = 1;
+        IDMM = 2;
+        EIDM = 3;
+    }
+
+    required Type type = 1;
+    // 自定义模型时需填写以下参数
+    optional string model_path = 2;     // 自定义模型的 .so 路径
+    optional string config_path = 3;    // 自定义模型的配置路径
+}
+
 message FollowModelConfig {
     optional bool enable_idm = 1 [default = false];
     optional double unit_t = 2 [default = 1.0];
     optional double search_lane_distance = 3 [default = 5.0];   
     optional int32 search_lane_depth = 4 [default = 2];         // 用于 cipv 判断当前 lane 下 search_lane_depth 个lane 都在前方
-    required double expect_speed = 5;                           // 期望速度     unit: m/s
+    required CarFollowModel model = 5;                          // 跟车模型
+    required double expect_speed = 11;                           // 期望速度     unit: m/s
     required double delta_acceleration = 6;                     // 加速度指数
     required double max_acceleration = 7;                       // 最大加速度   unit: m/s²
     required double comfortable_deceleration = 8;               // 舒适减速度   unit: m/s²
     required double saft_distance = 9;                          // 安全时距    unit: s
     required double min_saft_distance = 10;                     // 最小安全距离 unit: s
+    required ModelParameter model_param = 12;
 }

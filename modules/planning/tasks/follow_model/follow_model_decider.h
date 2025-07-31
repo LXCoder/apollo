@@ -24,7 +24,7 @@
 #include <memory>
 #include <string>
 
-#include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
+#include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "cyber/plugin_manager/plugin_manager.h"
