@@ -4,19 +4,22 @@ max_acceleration: 3.0
 comfortable_deceleration: 2.0
 saft_distance: 2.5
 min_saft_distance: 2.0
-enable_idm: true
+enable_idm: true                # 是否开启跟随模型
+model_param {
+    min_gap: 2.0                # 最小安全距离 (m) >= 0
+    accel: 3.0                  # 加速度能力 (m/s²) >= 0
+    decel: 2.0                  # 减速度能力 (m/s²) >= 0
+    emergency_decel: 9.0        # 紧急情况减速度能力 (m/s²) >= decel
+    tau: 2.5                    # 安全时距 (s)  >= 0
+    expect_speed: 11.18         # 期望速度 (m/s), default： 当前道路的限速
+    
+    # IDM,EIDM
+    delta: 2.0                  # 加速度指数
+    stepping: 0.25              # 计算跟随速度时的内部步长 (s) >= 0
+}
 model {
     type: IDM
-
-}
-model_param {
-    min_gap: 2.0
-    accel: 3.0
-    decel: 2.0
-    emergency_decel: 9.0
-    tau: 2.5
-    expect_speed: 11.18
-    # IDM,EIDM
-    delta: 2.0
-    stepping: 0.25
+    # type 为 CUSTOM 时，必须填写以下参数，模型的动态库和配置路径           
+    model_path: ""
+    config_path: ""
 }

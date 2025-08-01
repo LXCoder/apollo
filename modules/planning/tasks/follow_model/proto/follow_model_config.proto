@@ -5,7 +5,7 @@ package apollo.planning;
 
 message ModelParameter{
     // all model
-    required double min_gap = 1;            // 最小安全距离 (s) >= 0
+    required double min_gap = 1;            // 最小安全距离 (m) >= 0
     required double accel = 2;              // 加速度能力 (m/s²) >= 0
     required double decel = 3;              // 减速度能力 (m/s²) >= 0
     required double emergency_decel = 4;    // 紧急情况减速度能力 (m/s²) >= decel
