@@ -23,6 +23,7 @@
 #include <cmath>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "follow_model_base.h"
 
@@ -31,6 +32,7 @@
 
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
+#include "modules/planning/planning_base/common/speed/speed_data.h"
 #include "modules/planning/planning_interface_base/task_base/common/speed_optimizer.h"
 #include "modules/planning/planning_interface_base/task_base/task.h"
 
@@ -55,6 +57,11 @@ class FollowModelDecider : public SpeedOptimizer {
  private:
   bool InitPointIsCollision();
   bool LoadCarFollowModel();
+  std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
+      double v0, double s0, double a0,
+      NeighborVehicleInfo& neighbor_vehicle_info);
+  void PrintSpeedData(const SpeedData* const speed_data,
+                      const std::vector<common::SpeedPoint>& speed_profile);
 
   inline double CalculateScalarVelocity(double vx, double vy) {
     return std::sqrt(vx * vx + vy * vy);

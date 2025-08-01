@@ -26,10 +26,10 @@
 #include <cstdio>
 #include <limits>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
-#include "google/protobuf/message.h"
 #include "idm_utils.h"
 #include "model_registrar.h"
 
@@ -41,9 +41,9 @@
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
+#include "cyber/common/log.h"
 #include "modules/common/util/point_factory.h"
-#include "modules/map/hdmap/hdmap.h"
-#include "modules/map/hdmap/hdmap_util.h"
+#include "modules/planning/tasks/follow_model/follow_model_base.h"
 
 using namespace apollo;
 using apollo::common::util::PointFactory;
@@ -57,13 +57,17 @@ bool FollowModelDecider::Init(
   if (!SpeedOptimizer::Init(config_dir, name, injector)) {
     return false;
   }
-  // To be implemented.
-  bool flag = SpeedOptimizer::LoadConfig<FollowModelConfig>(&config_);
-  unit_t_ = config_.unit_t();
 
   // Load the config.
-  // return SpeedOptimizer::LoadConfig<IDMModelDeciderConfig>(&config_);
-  return flag;
+  if (!SpeedOptimizer::LoadConfig<FollowModelConfig>(&config_)) {
+    return false;
+  }
+
+  unit_t_ = config_.unit_t();
+
+  config_.set_enable_idm(LoadCarFollowModel());
+
+  return config_.enable_idm();
 }
 
 Status FollowModelDecider::Execute(Frame* frame,
@@ -75,21 +79,20 @@ Status FollowModelDecider::Execute(Frame* frame,
     return Status::OK();
   }
 
-  total_length_t_ = reference_line_info->st_graph_data().total_time_by_conf();
+  double total_time_t =
+      reference_line_info->st_graph_data().total_time_by_conf();
+  dimension_t_ = static_cast<uint32_t>(
+                     std::ceil(total_time_t / static_cast<double>(unit_t_))) +
+                 1;
 
-  auto ret =
-      Process(reference_line_info->path_data(), frame->PlanningStartPoint(),
-              reference_line_info->mutable_speed_data());
-  return ret;
+  return Process(reference_line_info->path_data(), frame->PlanningStartPoint(),
+                 reference_line_info->mutable_speed_data());
 }
 
 Status FollowModelDecider::Process(const PathData& path_data,
                                    const common::TrajectoryPoint& init_point,
                                    SpeedData* const speed_data) {
   if (InitPointIsCollision()) {
-    dimension_t_ = static_cast<uint32_t>(std::ceil(
-                       total_length_t_ / static_cast<double>(unit_t_))) +
-                   1;
     std::vector<common::SpeedPoint> speed_profile;
     double t = 0.0;
     for (uint32_t i = 0; i < dimension_t_; ++i, t += unit_t_) {
@@ -125,23 +128,19 @@ Status FollowModelDecider::Process(const PathData& path_data,
     printf("no cipv\n");
   }
 
-  dimension_t_ = static_cast<uint32_t>(std::ceil(
-                     total_length_t_ / static_cast<double>(unit_t_))) +
-                 1;
+  NeighborVehicleInfo neighbor_vehicle_info;
+  neighbor_vehicle_info.ego_speed = ego_speed;
+  neighbor_vehicle_info.front_vehicle_speed = cipv_speed;
+  neighbor_vehicle_info.front_vehicle_distance = distance;
 
-  auto speed_profile = PredictNonUniformAcceleration(
-      config_, ego_speed, 0, 0, unit_t_, dimension_t_, cipv_speed, distance);
+  auto speed_profile =
+      PredictNonUniformAcceleration(ego_speed, 0, 0, neighbor_vehicle_info);
   AINFO << "idm size: " << speed_profile.size()
         << ", speed data size: " << speed_data->size();
   printf("idm size: %d, speed data size: %d\n", speed_profile.size(),
          speed_data->size());
-  for (int i = 0, n = std::min(speed_profile.size(), speed_data->size()); i < n;
-       ++i) {
-    std::cout << std::fixed << std::setprecision(2) << speed_profile[i].t()
-              << "\t" << speed_profile[i].v() << "\t\t" << speed_profile[i].s()
-              << "\t\t" << speed_data->at(i).v() << "\t\t"
-              << speed_data->at(i).s() << "\n";
-  }
+
+  PrintSpeedData(speed_data, speed_profile);
 
   *speed_data = SpeedData(speed_profile);
 
@@ -168,9 +167,105 @@ bool FollowModelDecider::InitPointIsCollision() {
 }
 
 bool FollowModelDecider::LoadCarFollowModel() {
+  car_follow_model_.reset();
   car_follow_model_ = std::move(ModelRegistrar::Instance()->CreateProduct(
       CarFollowModel_Type_Name(config_.model().type())));
-  return car_follow_model_ != nullptr;
+  if (!car_follow_model_) {
+    AERROR << "Loading car following model failed, close car following model "
+              "module";
+    return false;
+  }
+
+  return car_follow_model_->Init(config_);
+}
+
+std::vector<common::SpeedPoint>
+FollowModelDecider::PredictNonUniformAcceleration(
+    double v0, double s0, double a0,
+    NeighborVehicleInfo& neighbor_vehicle_info) {
+  std::vector<common::SpeedPoint> speed_profile;
+
+  common::SpeedPoint init_point;
+  init_point.set_t(0.0);
+  init_point.set_s(0.0);
+  init_point.set_v(v0);
+  speed_profile.emplace_back(init_point);
+
+  double v = v0;
+  double s = s0;
+  double a = a0;
+  double dt = unit_t_;
+  double origin_distance = neighbor_vehicle_info.front_vehicle_distance;
+
+  CarFollowSpeedPoint speed_point;
+
+  for (size_t i = 1; i < dimension_t_ - 1; ++i) {
+    // update data
+    double t = i * dt;
+    neighbor_vehicle_info.ego_speed = v;
+    neighbor_vehicle_info.front_vehicle_distance = origin_distance - s;
+    // update speed & position
+    car_follow_model_->Calculate(neighbor_vehicle_info, speed_point);
+    // a = CalculateIDMModel(config_, v, cipv_speed, car_distance - s);
+    a = speed_point.a;
+    printf("idm acc:%.8f\n", a);
+    // v += a * dt;
+    // // s += std::min(0.0, v * dt + 0.5 * a * dt * dt);
+    // s += v * dt + 0.5 * a * dt * dt;
+    s += v * dt + 0.5 * a * dt * dt;
+    v += a * dt;
+
+    // update the distance between the front and ego vehicle
+    origin_distance += neighbor_vehicle_info.front_vehicle_speed * dt;
+
+    common::SpeedPoint sp;
+    sp.set_t(t);
+    sp.set_s(s);
+    sp.set_v(v);
+    speed_profile.emplace_back(sp);
+  }
+
+  // 末尾再推一个点
+  common::SpeedPoint last_speed_point;
+  last_speed_point.set_t((dimension_t_ - 1) * dt);
+  last_speed_point.set_s(s + speed_profile.back().v() * dt);
+  last_speed_point.set_v(0.0);
+  speed_profile.emplace_back(last_speed_point);
+  return speed_profile;
+}
+
+void FollowModelDecider::PrintSpeedData(
+    const SpeedData* const speed_data,
+    const std::vector<common::SpeedPoint>& speed_profile) {
+  int n = std::min(speed_profile.size(), speed_data->size());
+  std::vector<std::string> table_header{"t",     "v",     "s",
+                                        "idm_t", "idm_v", "idm_s"};
+  std::vector<std::vector<double>> table(n);
+
+  for (int i = 0; i < n; ++i) {
+    table[i] = {speed_data->at(i).t(), speed_data->at(i).v(),
+                speed_data->at(i).s(), speed_profile[i].t(),
+                speed_profile[i].v(),  speed_profile[i].s()};
+  }
+
+  int column_width = 12;
+  std::string split_line = std::string(column_width * table_header.size(), '-');
+
+  for (int j = 0, m = table_header.size(); j < m; ++j) {
+    std::cout << std::left << std::setw(column_width) << table_header[j];
+  }
+  std::cout << std::endl;
+
+  std::cout << split_line << std::endl;
+
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0, m = table[i].size(); j < m; ++j) {
+      std::cout << std::left << std::setw(column_width) << table[i][j];
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << split_line << std::endl << std::endl;
 }
 
 }  // namespace planning

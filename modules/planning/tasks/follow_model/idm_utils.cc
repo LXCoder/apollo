@@ -1,6 +1,6 @@
 
 
-#include "modules/planning/tasks/follow_model/idm_utils.h"
+#include "idm_utils.h"
 
 #include <climits>
 #include <cmath>
@@ -204,14 +204,13 @@ double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
 std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
     const FollowModelConfig& config, double v0, double s0, double a0, double dt,
     int dt_steps, double cipv_speed, double car_distance) {
-  // std::vector<State> trajectory;
   std::vector<common::SpeedPoint> speed_profile;
 
   common::SpeedPoint init_point;
   init_point.set_t(0.0);
   init_point.set_s(0.0);
   init_point.set_v(v0);
-  speed_profile.push_back(init_point);
+  speed_profile.emplace_back(init_point);
   // trajectory.push_back({0.0, 0.0, 0.0});
 
   double v = v0;
@@ -236,16 +235,15 @@ std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
     speed_point.set_t(t);
     speed_point.set_s(s);
     speed_point.set_v(v);
-    speed_profile.push_back(speed_point);
-    // trajectory.push_back({t, v, s});
+    speed_profile.emplace_back(speed_point);
   }
 
   // 末尾再推一个点
   common::SpeedPoint speed_point;
-  speed_point.set_t(dt_steps * dt);
+  speed_point.set_t((dt_steps - 1) * dt);
   speed_point.set_s(s + speed_profile.back().v() * dt);
   speed_point.set_v(0.0);
-  speed_profile.push_back(speed_point);
+  speed_profile.emplace_back(speed_point);
   return speed_profile;
 }
 
