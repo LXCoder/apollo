@@ -9,8 +9,8 @@ message ModelParameter{
     required double accel = 2;              // 加速度能力 (m/s²) >= 0
     required double decel = 3;              // 减速度能力 (m/s²) >= 0
     required double emergency_decel = 4;    // 紧急情况减速度能力 (m/s²) >= decel
-    required double expect_speed = 5;       // 期望速度 (m/s), default： 当前道路的限速
-    required double tau = 6;                // 安全时距 (s)  >= 0
+    required double tau = 5;                // 安全时距 (s)  >= 0
+    optional double expect_speed = 6;       // 期望速度 (m/s), default： 当前道路的限速
 
     // IDM,EIDM
     optional double delta = 20 [ default = 4 ];      // 加速度指数

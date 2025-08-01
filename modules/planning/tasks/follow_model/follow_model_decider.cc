@@ -29,11 +29,9 @@
 #include <string>
 #include <vector>
 
-#include "follow_model_base.h"
-#include "follow_model_factory.h"
-#include "follow_model_idm.h"
 #include "google/protobuf/message.h"
 #include "idm_utils.h"
+#include "model_registrar.h"
 
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/geometry.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
@@ -63,8 +61,6 @@ bool FollowModelDecider::Init(
   bool flag = SpeedOptimizer::LoadConfig<FollowModelConfig>(&config_);
   unit_t_ = config_.unit_t();
 
-  REGISTER_MODEL_TO_FACTORY(FollowModelBase, FollowModelIDM,
-                            CarFollowModel_Type_Name(CarFollowModel::IDM));
   // Load the config.
   // return SpeedOptimizer::LoadConfig<IDMModelDeciderConfig>(&config_);
   return flag;
@@ -73,13 +69,12 @@ bool FollowModelDecider::Init(
 Status FollowModelDecider::Execute(Frame* frame,
                                    ReferenceLineInfo* reference_line_info) {
   // To be implemented.
+  Task::Execute(frame, reference_line_info);
   printf("is near destination: %d\n", frame->is_near_destination());
   if (!config_.enable_idm() || frame->is_near_destination()) {
     return Status::OK();
   }
 
-  frame_ = frame;
-  reference_line_info_ = reference_line_info;
   total_length_t_ = reference_line_info->st_graph_data().total_time_by_conf();
 
   auto ret =
@@ -170,6 +165,12 @@ bool FollowModelDecider::InitPointIsCollision() {
   }
 
   return false;
+}
+
+bool FollowModelDecider::LoadCarFollowModel() {
+  car_follow_model_ = std::move(ModelRegistrar::Instance()->CreateProduct(
+      CarFollowModel_Type_Name(config_.model().type())));
+  return car_follow_model_ != nullptr;
 }
 
 }  // namespace planning

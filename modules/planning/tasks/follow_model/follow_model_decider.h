@@ -24,6 +24,8 @@
 #include <memory>
 #include <string>
 
+#include "follow_model_base.h"
+
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
@@ -39,6 +41,8 @@ namespace planning {
 
 class FollowModelDecider : public SpeedOptimizer {
  public:
+  ~FollowModelDecider() = default;
+
   bool Init(const std::string& config_dir, const std::string& name,
             const std::shared_ptr<DependencyInjector>& injector) override;
 
@@ -50,15 +54,15 @@ class FollowModelDecider : public SpeedOptimizer {
 
  private:
   bool InitPointIsCollision();
+  bool LoadCarFollowModel();
 
   inline double CalculateScalarVelocity(double vx, double vy) {
     return std::sqrt(vx * vx + vy * vy);
   };
 
  private:
+  std::shared_ptr<FollowModelBase> car_follow_model_;
   FollowModelConfig config_;
-  Frame* frame_;
-  ReferenceLineInfo* reference_line_info_;
   double total_length_t_ = 0.0;
   double unit_t_ = 0.0;
   uint32_t dimension_t_ = 0;
