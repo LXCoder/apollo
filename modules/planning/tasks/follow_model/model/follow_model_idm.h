@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
-#include "modules/planning/tasks/follow_model/base/follow_model_base.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/planning/tasks/follow_model/base/follow_model_base.h"
 
 namespace apollo {
 namespace planning {

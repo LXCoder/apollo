@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/geometry.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/localization_msgs/pose.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/common_msgs/basic_msgs/geometry.pb.h"
+#include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
+#include "modules/common_msgs/localization_msgs/pose.pb.h"
+#include "modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "modules/common/math/box2d.h"
 #include "modules/map/hdmap/hdmap.h"

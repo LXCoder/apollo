@@ -7,7 +7,6 @@
 #include <cstring>
 #include <string>
 
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 namespace apollo {
 namespace planning {
 

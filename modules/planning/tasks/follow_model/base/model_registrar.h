@@ -23,8 +23,9 @@
 #include <memory>
 #include <string>
 
-#include "factory.h"
-#include "follow_model_base.h"
+#include "modules/planning/tasks/follow_model/base/factory.h"
+#include "modules/planning/tasks/follow_model/base/follow_model_base.h"
+
 namespace apollo {
 namespace planning {
 
@@ -45,8 +46,6 @@ class ModelRegistrar : public IRegistrar<FollowModelBase> {
   ~ModelRegistrar() = default;
   ModelRegistrar(const ModelRegistrar&) = delete;
   ModelRegistrar& operator=(const ModelRegistrar&) = delete;
-
-  void RegisterAllCarFollowModel();
 
  private:
   std::shared_ptr<Factory<FollowModelBase, std::string>> model_factory_;

@@ -5,8 +5,11 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+
+#include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+
 #include "modules/map/hdmap/hdmap_common.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+
 namespace apollo {
 namespace planning {
 

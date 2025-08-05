@@ -25,16 +25,15 @@
 #include <string>
 #include <vector>
 
-#include "base/follow_model_base.h"
-
-#include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
 #include "modules/planning/planning_base/common/speed/speed_data.h"
 #include "modules/planning/planning_interface_base/task_base/common/speed_optimizer.h"
 #include "modules/planning/planning_interface_base/task_base/task.h"
+#include "modules/planning/tasks/follow_model/base/follow_model_base.h"
 
 using apollo::common::Status;
 

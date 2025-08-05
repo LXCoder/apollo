@@ -7,9 +7,8 @@
 #include <memory>
 #include <string>
 
-#include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
 
-// #include "modules/map/hdmap/hdmap_common.h"
 #include "modules/planning/planning_base/common/util/config_util.h"
 
 namespace apollo {
