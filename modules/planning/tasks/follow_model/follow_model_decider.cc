@@ -20,10 +20,15 @@
 
 #include "modules/planning/tasks/follow_model/follow_model_decider.h"
 
+#include <dlfcn.h>
+
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <ostream>
@@ -31,7 +36,6 @@
 #include <vector>
 
 #include "idm_utils.h"
-#include "model_registrar.h"
 
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/geometry.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
@@ -43,13 +47,26 @@
 
 #include "cyber/common/log.h"
 #include "modules/common/util/point_factory.h"
-#include "modules/planning/tasks/follow_model/follow_model_base.h"
+#include "modules/planning/tasks/follow_model/base/follow_model_base.h"
+#include "modules/planning/tasks/follow_model/base/model_registrar.h"
+#include "modules/planning/tasks/follow_model/model/follow_model_idm.h"
 
 using namespace apollo;
 using apollo::common::util::PointFactory;
 
 namespace apollo {
 namespace planning {
+
+FollowModelDecider::FollowModelDecider()
+    : handle_(nullptr), car_follow_model_(nullptr) {}
+
+FollowModelDecider::~FollowModelDecider() {
+  car_follow_model_.reset();
+  if (handle_) {
+    dlclose(handle_);
+    handle_ = nullptr;
+  }
+}
 
 bool FollowModelDecider::Init(
     const std::string& config_dir, const std::string& name,
@@ -63,6 +80,7 @@ bool FollowModelDecider::Init(
     return false;
   }
 
+  ReginsterCarFollowModel();
   unit_t_ = config_.unit_t();
 
   config_.set_enable_idm(LoadCarFollowModel());
@@ -129,9 +147,9 @@ Status FollowModelDecider::Process(const PathData& path_data,
   }
 
   NeighborVehicleInfo neighbor_vehicle_info;
-  neighbor_vehicle_info.ego_speed = ego_speed;
-  neighbor_vehicle_info.front_vehicle_speed = cipv_speed;
-  neighbor_vehicle_info.front_vehicle_distance = distance;
+  neighbor_vehicle_info.ego.speed = ego_speed;
+  neighbor_vehicle_info.front_vehicle.speed = cipv_speed;
+  neighbor_vehicle_info.front_vehicle.distance = distance;
 
   auto speed_profile =
       PredictNonUniformAcceleration(ego_speed, 0, 0, neighbor_vehicle_info);
@@ -166,17 +184,74 @@ bool FollowModelDecider::InitPointIsCollision() {
   return false;
 }
 
-bool FollowModelDecider::LoadCarFollowModel() {
-  car_follow_model_.reset();
-  car_follow_model_ = std::move(ModelRegistrar::Instance()->CreateProduct(
-      CarFollowModel_Type_Name(config_.model().type())));
-  if (!car_follow_model_) {
-    AERROR << "Loading car following model failed, close car following model "
-              "module";
-    return false;
+bool FollowModelDecider::LoadCustomCarFollowModel() {
+  bool is_succeed = false;
+  char message[512] = {0};
+  memset(message, 0x00, sizeof(message));
+  do {
+    void* handle = dlopen(config_.model().model_path().c_str(), RTLD_LAZY);
+    if (!handle) {
+      std::snprintf(message, sizeof(message),
+                    "Failed to load model [%s], dlopen error: %s.",
+                    config_.model().model_path().c_str(), dlerror());
+      break;
+    }
+
+    dlerror(); /* Clear any existing error */
+
+    create_model_ =
+        reinterpret_cast<CreateModelFunc>(dlsym(handle, "CreateFollowModel"));
+    destroy_model_ =
+        reinterpret_cast<DestroyModelFunc>(dlsym(handle, "DestroyFollowModel"));
+
+    const char* err;
+    if ((err = dlerror()) != nullptr) {
+      std::snprintf(message, sizeof(message), "dlsym error: %s.", err);
+      dlclose(handle);
+      break;
+    }
+
+    // 创建对象
+    FollowModelBase* model = create_model_();
+    if (!model) {
+      std::snprintf(message, sizeof(message),
+                    "Failed to create car follow model.");
+      break;
+    }
+    car_follow_model_.reset(model, destroy_model_);
+    is_succeed = true;
+  } while (0);
+
+  if (!is_succeed) {
+    AERROR << message;
   }
 
-  return car_follow_model_->Init(config_);
+  return is_succeed;
+}
+
+bool FollowModelDecider::LoadCarFollowModel() {
+  car_follow_model_.reset();
+  bool is_succeed = true;
+
+  if (config_.model().type() != CarFollowModel::CUSTOM) {
+    std::string model_name = CarFollowModel_Type_Name(config_.model().type());
+    car_follow_model_ =
+        std::move(ModelRegistrar::Instance()->CreateProduct(model_name));
+    if (!car_follow_model_) {
+      AERROR << "Loading car following model [" << model_name
+             << "] failed, close car following model module.";
+      is_succeed = false;
+    }
+  } else {
+    is_succeed = LoadCustomCarFollowModel();
+  }
+
+  if (is_succeed) {
+    car_follow_model_->Init(config_);
+  }
+  AINFO << "FollowModel created successfully.";
+
+  return is_succeed;
 }
 
 std::vector<common::SpeedPoint>
@@ -195,15 +270,15 @@ FollowModelDecider::PredictNonUniformAcceleration(
   double s = s0;
   double a = a0;
   double dt = unit_t_;
-  double origin_distance = neighbor_vehicle_info.front_vehicle_distance;
+  double origin_distance = neighbor_vehicle_info.front_vehicle.distance;
 
   CarFollowSpeedPoint speed_point;
 
   for (size_t i = 1; i < dimension_t_ - 1; ++i) {
     // update data
     double t = i * dt;
-    neighbor_vehicle_info.ego_speed = v;
-    neighbor_vehicle_info.front_vehicle_distance = origin_distance - s;
+    neighbor_vehicle_info.ego.speed = v;
+    neighbor_vehicle_info.front_vehicle.distance = origin_distance - s;
     // update speed & position
     car_follow_model_->Calculate(neighbor_vehicle_info, speed_point);
     // a = CalculateIDMModel(config_, v, cipv_speed, car_distance - s);
@@ -216,7 +291,7 @@ FollowModelDecider::PredictNonUniformAcceleration(
     v += a * dt;
 
     // update the distance between the front and ego vehicle
-    origin_distance += neighbor_vehicle_info.front_vehicle_speed * dt;
+    origin_distance += neighbor_vehicle_info.front_vehicle.speed * dt;
 
     common::SpeedPoint sp;
     sp.set_t(t);
@@ -251,6 +326,7 @@ void FollowModelDecider::PrintSpeedData(
   int column_width = 12;
   std::string split_line = std::string(column_width * table_header.size(), '-');
 
+  std::cout << "Model Name: " << car_follow_model_->Name() << std::endl;
   for (int j = 0, m = table_header.size(); j < m; ++j) {
     std::cout << std::left << std::setw(column_width) << table_header[j];
   }
@@ -266,6 +342,11 @@ void FollowModelDecider::PrintSpeedData(
   }
 
   std::cout << split_line << std::endl << std::endl;
+}
+
+void FollowModelDecider::ReginsterCarFollowModel() {
+  ModelRegistrar::Instance()->RegisterCarFollowModel<FollowModelIDM>(
+      CarFollowModel_Type_Name(CarFollowModel::IDM));
 }
 
 }  // namespace planning

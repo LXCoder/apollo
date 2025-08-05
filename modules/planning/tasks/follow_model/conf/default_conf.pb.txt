@@ -5,6 +5,7 @@ comfortable_deceleration: 2.0
 saft_distance: 2.5
 min_saft_distance: 2.0
 enable_idm: true                # 是否开启跟随模型
+enable_debug_output: true
 model_param {
     min_gap: 2.0                # 最小安全距离 (m) >= 0
     accel: 3.0                  # 加速度能力 (m/s²) >= 0
@@ -19,7 +20,8 @@ model_param {
 }
 model {
     type: IDM
-    # type 为 CUSTOM 时，必须填写以下参数，模型的动态库和配置路径           
-    model_path: ""
-    config_path: ""
+    # type 为 CUSTOM 时，必须填写以下参数，模型的动态库和配置路径
+    name: "Example Model"
+    model_path: "/apollo/bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/libfollow_model_example.so"
+
 }

@@ -32,8 +32,9 @@ message CarFollowModel{
 
     required Type type = 1;
     // 自定义模型时需填写以下参数
-    optional string model_path = 2;     // 自定义模型的 .so 路径
-    optional string config_path = 3;    // 自定义模型的配置路径
+    optional string name = 2;
+    optional string model_path = 3;     // 自定义模型的 .so 路径
+    optional string config_path = 4;    // 自定义模型的配置路径
 }
 
 message FollowModelConfig {
@@ -49,4 +50,5 @@ message FollowModelConfig {
     required double saft_distance = 9;                          // 安全时距    unit: s
     required double min_saft_distance = 10;                     // 最小安全距离 unit: s
     required ModelParameter model_param = 12;
+    optional bool enable_debug_output = 13 [default = false];
 }

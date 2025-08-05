@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include "follow_model_base.h"
+#include "base/follow_model_base.h"
 
 #include "bazel-out/k8-dbg/bin/modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "bazel-out/k8-dbg/bin/modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
@@ -43,7 +43,12 @@ namespace planning {
 
 class FollowModelDecider : public SpeedOptimizer {
  public:
-  ~FollowModelDecider() = default;
+  // load custom model
+  using CreateModelFunc = FollowModelBase* (*)();
+  using DestroyModelFunc = void (*)(FollowModelBase*);
+
+  FollowModelDecider();
+  ~FollowModelDecider();
 
   bool Init(const std::string& config_dir, const std::string& name,
             const std::shared_ptr<DependencyInjector>& injector) override;
@@ -57,6 +62,8 @@ class FollowModelDecider : public SpeedOptimizer {
  private:
   bool InitPointIsCollision();
   bool LoadCarFollowModel();
+  bool LoadCustomCarFollowModel();
+  void ReginsterCarFollowModel();
   std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
       double v0, double s0, double a0,
       NeighborVehicleInfo& neighbor_vehicle_info);
@@ -68,11 +75,13 @@ class FollowModelDecider : public SpeedOptimizer {
   };
 
  private:
-  std::shared_ptr<FollowModelBase> car_follow_model_;
+  void* handle_;
+  uint32_t dimension_t_;
+  double unit_t_;
   FollowModelConfig config_;
-  double total_length_t_ = 0.0;
-  double unit_t_ = 0.0;
-  uint32_t dimension_t_ = 0;
+  std::shared_ptr<FollowModelBase> car_follow_model_;
+  CreateModelFunc create_model_;
+  DestroyModelFunc destroy_model_;
 };
 
 CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::FollowModelDecider,
