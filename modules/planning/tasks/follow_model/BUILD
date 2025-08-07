@@ -48,13 +48,11 @@ apollo_cc_library(
 apollo_plugin(
     name = "libfollow_model_decider.so",
     srcs = [
-        "follow_model_decider.cc", 
-        "idm_utils.cc",
+        "follow_model_decider.cc",
         "model/follow_model_idm.cc"
     ],
     hdrs = [
-        "follow_model_decider.h", 
-        "idm_utils.h",
+        "follow_model_decider.h",
         "model/follow_model_idm.h"
     ],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],

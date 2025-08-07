@@ -1,5 +1,5 @@
 /**
- * @file idm_utils.h
+ * @file common_utils.h
  **/
 
 #pragma once
@@ -36,13 +36,6 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
                      const hdmap::LaneInfoConstPtr& current_lane,
                      const hdmap::LaneInfoConstPtr& other_lane, int depth);
 
-double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
-                         double front_vehicle_speed,
-                         double front_vehicle_distance);
-
-std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const FollowModelConfig& config, double v0, double s0, double a0, double dt,
-    int dt_steps, double cipv_speed, double car_distance);
 
 }  // namespace planning
 }  // namespace apollo

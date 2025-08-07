@@ -47,7 +47,7 @@
 #include "modules/common/util/point_factory.h"
 #include "modules/planning/tasks/follow_model/base/follow_model_base.h"
 #include "modules/planning/tasks/follow_model/base/model_registrar.h"
-#include "modules/planning/tasks/follow_model/idm_utils.h"
+#include "modules/planning/tasks/follow_model/base/common_utils.h"
 #include "modules/planning/tasks/follow_model/model/follow_model_idm.h"
 
 using namespace apollo;
@@ -248,7 +248,8 @@ bool FollowModelDecider::LoadCarFollowModel() {
   if (is_succeed) {
     car_follow_model_->Init(config_);
   }
-  AINFO << "FollowModel created successfully.";
+  AINFO << "Successfully created car following model: "
+        << car_follow_model_->Name();
 
   return is_succeed;
 }

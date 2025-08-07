@@ -1,6 +1,6 @@
 
 
-#include "idm_utils.h"
+#include "common_utils.h"
 
 #include <climits>
 #include <cmath>
@@ -178,74 +178,6 @@ bool IsSuccessorLane(const hdmap::HDMap* hdmap_ptr,
   return false;
 }
 
-double CalculateIDMModel(const FollowModelConfig& config, double ego_speed,
-                         double front_vehicle_speed,
-                         double front_vehicle_distance) {
-  // 计算相对速度
-  double delta_v = ego_speed - front_vehicle_speed;
-  // 计算期望跟车距离
-  double expect_distance =
-      config.min_saft_distance() +
-      std::max(0.0, ego_speed * config.saft_distance() +
-                        (ego_speed * delta_v) /
-                            (2 * std::sqrt(config.max_acceleration() *
-                                           config.comfortable_deceleration())));
-  // 计算加速度
-  double acceleration =
-      config.max_acceleration() *
-      (1.0 -
-       std::pow((ego_speed / config.expect_speed()),
-                config.delta_acceleration()) -
-       std::pow((expect_distance / front_vehicle_distance), 2.0));
-
-  return acceleration;
-}
-
-std::vector<common::SpeedPoint> PredictNonUniformAcceleration(
-    const FollowModelConfig& config, double v0, double s0, double a0, double dt,
-    int dt_steps, double cipv_speed, double car_distance) {
-  std::vector<common::SpeedPoint> speed_profile;
-
-  common::SpeedPoint init_point;
-  init_point.set_t(0.0);
-  init_point.set_s(0.0);
-  init_point.set_v(v0);
-  speed_profile.emplace_back(init_point);
-  // trajectory.push_back({0.0, 0.0, 0.0});
-
-  double v = v0;
-  double s = s0;
-  double a = a0;
-
-  for (size_t i = 1; i < dt_steps - 1; ++i) {
-    // double a = accelerations[i];
-    double t = i * dt;
-    // 更新速度 & 位置
-    a = CalculateIDMModel(config, v, cipv_speed, car_distance - s);
-    printf("idm acc:%.8f\n", a);
-    // v += a * dt;
-    // // s += std::min(0.0, v * dt + 0.5 * a * dt * dt);
-    // s += v * dt + 0.5 * a * dt * dt;
-    s += v * dt + 0.5 * a * dt * dt;
-    v += a * dt;
-
-    car_distance += cipv_speed * dt;
-
-    common::SpeedPoint speed_point;
-    speed_point.set_t(t);
-    speed_point.set_s(s);
-    speed_point.set_v(v);
-    speed_profile.emplace_back(speed_point);
-  }
-
-  // 末尾再推一个点
-  common::SpeedPoint speed_point;
-  speed_point.set_t((dt_steps - 1) * dt);
-  speed_point.set_s(s + speed_profile.back().v() * dt);
-  speed_point.set_v(0.0);
-  speed_profile.emplace_back(speed_point);
-  return speed_profile;
-}
 
 }  // namespace planning
 }  // namespace apollo

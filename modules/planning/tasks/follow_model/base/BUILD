@@ -9,11 +9,13 @@ apollo_cc_library(
     srcs = [
         "model_registrar.cc",
         "follow_model_base.cc",
+        "common_utils.cc",
     ],
     hdrs = [
-        "factory.h",
         "model_registrar.h",
         "follow_model_base.h",
+        "common_utils.h",
+        "factory.h",
     ],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
