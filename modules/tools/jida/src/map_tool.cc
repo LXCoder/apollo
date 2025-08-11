@@ -1,14 +1,18 @@
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cstdio>
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
+
 #include "modules/common_msgs/basic_msgs/geometry.pb.h"
 #include "modules/common_msgs/external_command_msgs/geometry.pb.h"
 #include "modules/common_msgs/map_msgs/map.pb.h"
+
 #include "cyber/cyber.h"
 #include "modules/map/hdmap/adapter/opendrive_adapter.h"
 #include "modules/map/hdmap/hdmap.h"
@@ -125,7 +129,7 @@ int main(int argc, char* argv[]) {
     if (mode == 0) {
       is_running = false;
       continue;
-    } else if (mode < 0 || mode > tool_modes.size()) {
+    } else if (mode < 0 || mode > static_cast<int>(tool_modes.size())) {
       continue;
     }
 
