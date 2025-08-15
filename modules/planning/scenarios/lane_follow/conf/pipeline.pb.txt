@@ -35,7 +35,7 @@ stage: {
     type: "PathTimeHeuristicOptimizer"
   }
   task {
-    name: "Follow_MODEL"
+    name: "FOLLOW_MODEL_DECIDER"
     type: "FollowModelDecider"
   }
   task {
