@@ -20,7 +20,7 @@ using LaneInfoConstPtr = std::shared_ptr<const LaneInfo>;
 
 namespace planning {
 
-#define REGISTER_CUSTOM_MODEL(ModelType)                           \
+#define REGISTER_CUSTOM_MODEL_PLUGIN(ModelType)                           \
   extern "C" {                                                     \
   FollowModelBase* CreateFollowModel() { return new ModelType(); } \
                                                                    \

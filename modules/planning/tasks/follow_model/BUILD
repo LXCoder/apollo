@@ -10,27 +10,6 @@ filegroup(
     ]),
 )
 
-# apollo_cc_library(
-#     name = "follow_model",
-#     srcs = [
-#         "model_registrar.cc",
-#         "follow_model_base.cc",
-#         "follow_model_idm.cc",
-#     ],
-#     hdrs = [
-#         "factory.h",
-#         "model_registrar.h",
-#         "follow_model_base.h",
-#         "follow_model_idm.h",
-#     ],
-#     copts = ["-DMODULE_NAME=\\\"planning\\\""],
-#     deps = [
-#         "//modules/map:apollo_map",
-#         "//modules/planning/planning_base:apollo_planning_planning_base",
-#         "//modules/planning/tasks/follow_model/proto:follow_model_config_proto",
-#     ],
-# )
-
 apollo_cc_library(
     name = "follow_model_example",
     srcs = [

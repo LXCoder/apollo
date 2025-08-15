@@ -38,17 +38,11 @@ message CarFollowModel{
 }
 
 message FollowModelConfig {
-    optional bool enable_idm = 1 [default = false];
+    optional bool enable_follow_mode = 1 [default = false];
     optional double unit_t = 2 [default = 1.0];
     optional double search_lane_distance = 3 [default = 5.0];   
     optional int32 search_lane_depth = 4 [default = 2];         // 用于 cipv 判断当前 lane 下 search_lane_depth 个lane 都在前方
     required CarFollowModel model = 5;                          // 跟车模型
-    required double expect_speed = 11;                           // 期望速度     unit: m/s
-    required double delta_acceleration = 6;                     // 加速度指数
-    required double max_acceleration = 7;                       // 最大加速度   unit: m/s²
-    required double comfortable_deceleration = 8;               // 舒适减速度   unit: m/s²
-    required double saft_distance = 9;                          // 安全时距    unit: s
-    required double min_saft_distance = 10;                     // 最小安全距离 unit: s
-    required ModelParameter model_param = 12;
-    optional bool enable_debug_output = 13 [default = false];
+    required ModelParameter model_param = 6;
+    optional bool enable_debug_output = 7 [default = false];
 }
