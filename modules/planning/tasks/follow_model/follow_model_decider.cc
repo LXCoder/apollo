@@ -45,6 +45,7 @@
 
 #include "cyber/common/log.h"
 #include "modules/common/util/point_factory.h"
+#include "modules/planning/planning_base/gflags/planning_gflags.h"
 #include "modules/planning/tasks/follow_model/base/common_utils.h"
 #include "modules/planning/tasks/follow_model/base/follow_model_base.h"
 #include "modules/planning/tasks/follow_model/base/model_registrar.h"
@@ -81,6 +82,7 @@ bool FollowModelDecider::Init(
 
   unit_t_ = config_.unit_t();
   if (config_.enable_follow_mode()) {
+    FLAGS_default_cruise_speed = config_.model_param().expect_speed();
     ReginsterCarFollowModel();
     bool is_succeed = LoadCarFollowModel();
     config_.set_enable_follow_mode(is_succeed);
@@ -292,8 +294,10 @@ FollowModelDecider::PredictNonUniformAcceleration(
     // v += a * dt;
     // // s += std::min(0.0, v * dt + 0.5 * a * dt * dt);
     // s += v * dt + 0.5 * a * dt * dt;
-    s += v * dt + 0.5 * a * dt * dt;
-    v += a * dt;
+    double t_s = std::floor((v * dt + 0.5 * a * dt * dt) * 10 + 0.5) /
+                 10;  // Keep one decimal place
+    s += std::max(t_s, 0.0);
+    v += std::max(a * dt, 0.0);
 
     // update the distance between the front and ego vehicle
     origin_distance += neighbor_vehicle_info.front_vehicle.speed * dt;
