@@ -72,6 +72,13 @@ int ConvertTurnTypeToDegree(const Lane& lane) {
 
 bool IsAtLeft(std::shared_ptr<const LaneInfo> lane1,
               std::shared_ptr<const LaneInfo> lane2) {
+  if (lane1 == nullptr && lane2 == nullptr) {
+    return false;
+  } else if (lane1 == nullptr) {
+    return false;
+  } else if (lane2 == nullptr) {
+    return true;
+  }
   if (lane1->lane().has_turn() && lane2->lane().has_turn() &&
       lane1->lane().turn() != lane2->lane().turn()) {
     int degree_to_left_1 = ConvertTurnTypeToDegree(lane1->lane());
