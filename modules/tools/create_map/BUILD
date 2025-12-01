@@ -19,6 +19,14 @@ apollo_py_binary(
     ],
 )
 
+apollo_py_binary(
+    name = "convert_map_bin2txt",
+    srcs = ["convert_map_bin2txt.py"],
+    deps = [
+        "//modules/common_msgs/map_msgs:map_py_pb2",
+    ],
+)
+
 # install(
 #     name = "install",
 #     py_dest = "tools/create_map",
