@@ -20,7 +20,7 @@ apollo_cc_library(
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         "//modules/planning/planning_base:apollo_planning_planning_base",
-        "//modules/planning/tasks/follow_model/proto:follow_model_config_proto",
+        "//modules/planning/tasks/follow_model/proto:follow_model_proto",
     ],
 )
 

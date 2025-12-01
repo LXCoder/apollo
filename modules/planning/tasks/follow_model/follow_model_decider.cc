@@ -42,8 +42,12 @@
 #include "modules/common_msgs/perception_msgs/perception_obstacle.pb.h"
 #include "modules/common_msgs/prediction_msgs/prediction_obstacle.pb.h"
 #include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_info.pb.h"
 
 #include "cyber/common/log.h"
+#include "cyber/cyber.h"
+#include "cyber/node/node.h"
+#include "modules/common/util/message_util.h"
 #include "modules/common/util/point_factory.h"
 #include "modules/planning/planning_base/gflags/planning_gflags.h"
 #include "modules/planning/tasks/follow_model/base/common_utils.h"
@@ -54,11 +58,20 @@
 using namespace apollo;
 using apollo::common::util::PointFactory;
 
+namespace {
+constexpr char kFollowModelNodeName[] = "follow_model";
+constexpr char kFollowModelInfo[] = "/apollo/follow_model_info";
+}  // namespace
+
 namespace apollo {
 namespace planning {
 
 FollowModelDecider::FollowModelDecider()
-    : handle_(nullptr), car_follow_model_(nullptr) {}
+    : handle_(nullptr), car_follow_model_(nullptr) {
+  follow_model_node_ = cyber::CreateNode(kFollowModelNodeName);
+  follow_model_info_writer_ =
+      follow_model_node_->CreateWriter<FollowModelInfo>(kFollowModelInfo);
+}
 
 FollowModelDecider::~FollowModelDecider() {
   car_follow_model_.reset();
@@ -91,6 +104,13 @@ bool FollowModelDecider::Init(
     }
   }
 
+  debug_info_.set_enable(config_.enable_follow_mode());
+  debug_info_.set_model_type(CarFollowModel::Type_Name(config_.model().type()));
+  if (config_.model().type() == CarFollowModel::CUSTOM) {
+    debug_info_.set_model_name(config_.model().name());
+    debug_info_.set_model_path(config_.model().model_path());
+  }
+
   return true;
 }
 
@@ -98,8 +118,10 @@ Status FollowModelDecider::Execute(Frame* frame,
                                    ReferenceLineInfo* reference_line_info) {
   // To be implemented.
   Task::Execute(frame, reference_line_info);
+  debug_info_.set_is_near_destination(frame->is_near_destination());
   printf("is near destination: %d\n", frame->is_near_destination());
   if (!config_.enable_follow_mode() || frame->is_near_destination()) {
+    WriteFollowModelInfo();
     return Status::OK();
   }
 
@@ -140,17 +162,26 @@ Status FollowModelDecider::Process(const PathData& path_data,
   double ego_speed = CalculateScalarVelocity(pose.linear_velocity().x(),
                                              pose.linear_velocity().y());
   double cipv_speed = 0.0;
+  std::string message(256, '\0');
   if (!SelectCIPVFromObstacles(pose, prediction, config_.search_lane_distance(),
                                config_.search_lane_depth(), &cipv, &distance)) {
     auto cipv_obs = cipv.perception_obstacle();
     cipv_speed = CalculateScalarVelocity(cipv_obs.velocity().x(),
                                          cipv_obs.velocity().y());
+
+    std::snprintf(
+        const_cast<char*>(message.data()), message.size() - 1,
+        "find cipv, id: %d distance: %.8f ,speed: %.8f ,ego_speed: %.8f\n",
+        cipv_obs.id(), distance, cipv_speed, ego_speed);
     printf("find cipv, id: %d distance: %.8f ,speed: %.8f ,ego_speed: %.8f\n",
            cipv_obs.id(), distance, cipv_speed, ego_speed);
 
   } else {
     printf("no cipv\n");
+    message = "no cipv\n";
+    // std::snprintf(message.data(), message.size() - 1, "no cipv\n");
   }
+  debug_info_.set_message(message);
 
   NeighborVehicleInfo neighbor_vehicle_info;
   neighbor_vehicle_info.ego.speed = ego_speed;
@@ -161,12 +192,13 @@ Status FollowModelDecider::Process(const PathData& path_data,
       PredictNonUniformAcceleration(ego_speed, 0, 0, neighbor_vehicle_info);
   AINFO << "idm size: " << speed_profile.size()
         << ", speed data size: " << speed_data->size();
-  printf("idm size: %d, speed data size: %d\n", speed_profile.size(),
+  printf("idm size: %lu, speed data size: %lu\n", speed_profile.size(),
          speed_data->size());
 
   PrintSpeedData(speed_data, speed_profile);
 
   *speed_data = SpeedData(speed_profile);
+  WriteFollowModelInfo();
 
   return Status::OK();
 }
@@ -326,10 +358,17 @@ void FollowModelDecider::PrintSpeedData(
                                         "idm_t", "idm_v", "idm_s"};
   std::vector<std::vector<double>> table(n);
 
+  debug_info_.mutable_model_speeds()->Clear();
+  debug_info_.mutable_default_speeds()->Clear();
+
   for (int i = 0; i < n; ++i) {
     table[i] = {speed_data->at(i).t(), speed_data->at(i).v(),
                 speed_data->at(i).s(), speed_profile[i].t(),
                 speed_profile[i].v(),  speed_profile[i].s()};
+    auto sp = debug_info_.mutable_default_speeds()->Add();
+    sp->CopyFrom(speed_data->at(i));
+    sp = debug_info_.mutable_model_speeds()->Add();
+    sp->CopyFrom(speed_profile[i]);
   }
 
   int column_width = 12;
@@ -351,6 +390,13 @@ void FollowModelDecider::PrintSpeedData(
   }
 
   std::cout << split_line << std::endl << std::endl;
+}
+
+void FollowModelDecider::WriteFollowModelInfo() {
+  apollo::common::util::FillHeader(follow_model_node_->Name(), &debug_info_);
+
+  follow_model_info_writer_->Write(
+      std::make_shared<FollowModelInfo>(debug_info_));
 }
 
 void FollowModelDecider::ReginsterCarFollowModel() {

@@ -27,7 +27,10 @@
 
 #include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
 #include "modules/planning/tasks/follow_model/proto/follow_model_config.pb.h"
+#include "modules/planning/tasks/follow_model/proto/follow_model_info.pb.h"
 
+#include "cyber/node/node.h"
+#include "cyber/node/writer.h"
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "modules/common/status/status.h"
 #include "modules/planning/planning_base/common/speed/speed_data.h"
@@ -69,6 +72,8 @@ class FollowModelDecider : public SpeedOptimizer {
   void PrintSpeedData(const SpeedData* const speed_data,
                       const std::vector<common::SpeedPoint>& speed_profile);
 
+  void WriteFollowModelInfo();
+
   inline double CalculateScalarVelocity(double vx, double vy) {
     return std::sqrt(vx * vx + vy * vy);
   };
@@ -78,9 +83,12 @@ class FollowModelDecider : public SpeedOptimizer {
   uint32_t dimension_t_;
   double unit_t_;
   FollowModelConfig config_;
+  FollowModelInfo debug_info_;
   std::shared_ptr<FollowModelBase> car_follow_model_;
-  CreateModelFunc create_model_;
+  std::unique_ptr<apollo::cyber::Node> follow_model_node_;
+  std::shared_ptr<cyber::Writer<FollowModelInfo>> follow_model_info_writer_;
   DestroyModelFunc destroy_model_;
+  CreateModelFunc create_model_;
 };
 
 CYBER_PLUGIN_MANAGER_REGISTER_PLUGIN(apollo::planning::FollowModelDecider,

@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package apollo.planning;
+
+import "modules/common_msgs/basic_msgs/header.proto";
+import "modules/common_msgs/basic_msgs/pnc_point.proto";
+
+
+message FollowModelInfo{
+    optional apollo.common.Header header = 1;
+    required bool enable = 2;
+    optional bool is_near_destination = 3;
+    required string model_type = 4;
+    optional string model_name = 5;
+    optional string model_path = 6;
+    repeated apollo.common.SpeedPoint model_speeds = 7;
+    repeated apollo.common.SpeedPoint default_speeds = 8;
+    optional string message = 35;
+
+        
+}
