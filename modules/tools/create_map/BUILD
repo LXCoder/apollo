@@ -24,6 +24,7 @@ apollo_py_binary(
     srcs = ["convert_map_bin2txt.py"],
     deps = [
         "//modules/common_msgs/map_msgs:map_py_pb2",
+        "//modules/routing/proto:topo_graph_proto_py_pb2"
     ],
 )
 

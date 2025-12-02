@@ -21,6 +21,7 @@ Convert a base map from txt to bin format
 
 import argparse
 from modules.common_msgs.map_msgs.map_pb2 import Map
+from modules.routing.proto.topo_graph_pb2 import Graph
 from google.protobuf import text_format
 
 
@@ -39,13 +40,23 @@ def main():
         help='Output base map in txt format',
         type=str,
         default='modules/map/data/gen/base_map.txt')
+    parser.add_argument(
+        '-t',
+        '--type',
+        help='map type: base, routing, sim',
+        type=str,
+        default='map')
     args = vars(parser.parse_args())
 
     input_file_name = args['input_file']
     output_file_name = args['output_file']
+    map_type = args['type']
 
     with open(input_file_name, 'rb') as f:
-        mp = Map()
+        if map_type == 'map' or map_type == 'sim':
+            mp = Map()
+        elif map_type == 'routing':
+            mp = Graph()
         mp.ParseFromString(f.read())
 
     # Output map
