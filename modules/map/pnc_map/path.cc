@@ -17,6 +17,7 @@
 #include "modules/map/pnc_map/path.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <unordered_map>
 
@@ -27,6 +28,7 @@
 #include "modules/common/math/line_segment2d.h"
 #include "modules/common/math/math_utils.h"
 #include "modules/common/math/polygon2d.h"
+#include "modules/common/math/vec2d.h"
 #include "modules/common/util/string_util.h"
 
 namespace apollo {
@@ -43,6 +45,7 @@ using std::placeholders::_1;
 namespace {
 
 const double kSampleDistance = 0.25;
+const double kP = 1e10;
 
 bool FindLaneSegment(const MapPathPoint& p1, const MapPathPoint& p2,
                      LaneSegment* const lane_segment) {
@@ -379,6 +382,8 @@ void Path::InitPoints() {
     } else {
       segments_.emplace_back(path_points_[i], path_points_[i + 1]);
       heading = path_points_[i + 1] - path_points_[i];
+      heading.set_x(std::round(heading.x() * kP) / kP);
+      heading.set_y(std::round(heading.y() * kP) / kP);
       float heading_length = heading.Length();
       // TODO(All): use heading.length when all adjacent lanes are guarantee to
       // be connected.
