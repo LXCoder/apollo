@@ -94,3 +94,6 @@ modules/perception/data/models/*.yaml
 modules/drivers/lidar/velodyne/params/*.yaml
 modules/localization/msf/params/velodyne_params/*.yaml
 modules/perception/data/models/*
+*.yaml
+
+third_party
