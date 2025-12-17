@@ -8,4 +8,13 @@ path_optimizer_config {
   dddl_weight: 50000.0
   path_reference_l_weight: 100.0
   lateral_derivative_bound_default: 2.0
+  
+  # 对变道的限制放开一点
+  # l_weight: 0.8
+  # dl_weight: 5.0
+  # ddl_weight: 50.0
+  # dddl_weight: 100.0
+  # path_reference_l_weight: 30.0
+  # lateral_derivative_bound_default: 6.0
+
 }
