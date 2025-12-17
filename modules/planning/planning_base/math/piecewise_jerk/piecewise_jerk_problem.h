@@ -26,6 +26,8 @@
 
 #include "osqp/osqp.h"
 
+#include "modules/common_msgs/tess_msgs/tess_osqp.pb.h"
+
 namespace apollo {
 namespace planning {
 
@@ -145,6 +147,10 @@ class PiecewiseJerkProblem {
     memcpy(data, vec.data(), sizeof(T) * vec.size());
     return data;
   }
+
+ private:
+  bool DebugOsqp(OSQPData* data, apollo::tess::OSQPData* osqp_data);
+  void DebugCsc(csc* data, apollo::tess::Csc* csc);
 
  protected:
   size_t num_of_knots_ = 0;

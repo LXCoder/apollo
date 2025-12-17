@@ -16,7 +16,20 @@
 
 #include "modules/planning/planning_base/math/piecewise_jerk/piecewise_jerk_problem.h"
 
+#include <sys/types.h>
+
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <string>
+
+#include "modules/common_msgs/tess_msgs/tess_osqp.pb.h"
+
+#include "cyber/common/file.h"
 #include "cyber/common/log.h"
+#include "modules/common/util/message_util.h"
 #include "modules/planning/planning_base/gflags/planning_gflags.h"
 
 namespace apollo {
@@ -101,6 +114,11 @@ bool PiecewiseJerkProblem::Optimize(const int max_iter) {
   osqp_solve(osqp_work);
   auto status = osqp_work->info->status_val;
 
+  apollo::tess::OSQPData osqp_data;
+  if (DebugOsqp(data, &osqp_data)) {
+    AERROR << "dump osqp data:\n" << osqp_data.header().Utf8DebugString();
+  }
+  
   if (status < 0 || (status != 1 && status != 2)) {
     AERROR << "failed optimization status:\t" << osqp_work->info->status;
     osqp_cleanup(osqp_work);
@@ -360,6 +378,75 @@ bool PiecewiseJerkProblem::CheckLowUpperBound(std::vector<c_float>& lower,
     }
   }
   return false;
+}
+
+bool PiecewiseJerkProblem::DebugOsqp(OSQPData* data,
+                                     apollo::tess::OSQPData* osqp_data) {
+  static uint64_t seq = 0;
+  static std::string dir_path = "/apollo/data/osqp_data/";
+  if (seq == 0) {
+    auto now = std::chrono::system_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                  now.time_since_epoch()) %
+              1000;
+
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+    oss << "/";
+    dir_path.append(oss.str());
+    apollo::cyber::common::CreateDir(dir_path);
+  }
+
+  osqp_data->set_m(data->m);
+  osqp_data->set_n(data->n);
+
+  for (int i = 0; i < data->n; ++i) {
+    osqp_data->mutable_q()->Add(*(data->q + i));
+  }
+
+  for (int i = 0; i < data->m; ++i) {
+    osqp_data->mutable_l()->Add(*(data->l + i));
+  }
+
+  for (int i = 0; i < data->m; ++i) {
+    osqp_data->mutable_u()->Add(*(data->u + i));
+  }
+
+  DebugCsc(data->A, osqp_data->mutable_a());
+  DebugCsc(data->P, osqp_data->mutable_p());
+  apollo::common::util::FillHeader("test_osqp", osqp_data);
+  std::string filename = dir_path + std::to_string(seq);
+  filename.append(".pb.txt");
+  bool success =
+      apollo::cyber::common::SetProtoToASCIIFile(*osqp_data, filename);
+  if (success) {
+    printf("dump osqp data: %s\n", filename.c_str());
+    seq++;
+  }
+
+  return success;
+}
+
+void PiecewiseJerkProblem::DebugCsc(csc* data, apollo::tess::Csc* csc) {
+  csc->set_nzmax(data->nzmax);
+  csc->set_m(data->m);
+  csc->set_n(data->n);
+  csc->set_nz(data->nz);
+
+  for (int i = 0; i < data->n + 1; ++i) {
+    csc->mutable_p()->Add(*(data->p + i));
+  }
+
+  for (int i = 0; i < data->nzmax; ++i) {
+    csc->mutable_i()->Add(*(data->i + i));
+  }
+
+  for (int i = 0; i < data->nzmax; ++i) {
+    csc->mutable_x()->Add(*(data->x + i));
+  }
 }
 
 }  // namespace planning

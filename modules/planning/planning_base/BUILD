@@ -246,6 +246,7 @@ apollo_cc_library(
         "//modules/common_msgs/prediction_msgs:scenario_cc_proto",
         "//modules/common_msgs/routing_msgs:routing_cc_proto",
         "//modules/common_msgs/storytelling_msgs:story_cc_proto",
+        "//modules/common_msgs/tess_msgs:tess_osqp_cc_proto",
         "//modules/map:apollo_map",
         "//modules/planning/planning_base/learning_based/model_inference/proto:learning_model_inference_cc_proto",
         "//modules/planning/planning_base/proto:auto_tuning_model_input_cc_proto",

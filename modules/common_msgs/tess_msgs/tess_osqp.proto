@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package apollo.tess;
+
+import "modules/common_msgs/basic_msgs/header.proto";
+
+
+message Csc{
+    optional int64 nzmax = 1;
+    optional int64 m = 2;
+    optional int64 n = 3;
+    optional int64 nz = 4;
+    repeated int64 p = 5;
+    repeated int64 i = 6;
+    repeated float x = 7;
+}
+
+message OSQPData{
+    optional apollo.common.Header header = 1;
+    optional int64 n = 2;
+    optional int64 m = 3;
+    repeated float q = 4;
+    repeated float l = 5;
+    repeated float u = 6;
+    optional Csc P = 7;
+    optional Csc A = 8;
+}
