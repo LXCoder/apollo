@@ -83,5 +83,18 @@ apollo_cc_binary(
     ],
 )
 
+apollo_cc_binary(
+    name = "gen_road_sample",
+    srcs = ["gen_road_sample.cc"],
+    deps = [
+        "//cyber",
+        "//modules/common_msgs/map_msgs:map_cc_proto",
+        "//modules/common/configs:config_gflags",
+        "//modules/common/util:common_util",
+        "//modules/map:apollo_map",
+        "@com_github_gflags_gflags//:gflags",
+    ],
+)
+
 apollo_package()
 cpplint()
