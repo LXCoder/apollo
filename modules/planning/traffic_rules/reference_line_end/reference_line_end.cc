@@ -23,6 +23,8 @@
 #include <memory>
 
 #include "modules/common_msgs/basic_msgs/pnc_point.pb.h"
+
+// #include "cyber/common/log.h"
 #include "modules/common/configs/vehicle_config_helper.h"
 #include "modules/planning/planning_base/gflags/planning_gflags.h"
 
@@ -52,6 +54,11 @@ Status ReferenceLineEnd::ApplyRule(
   // check
   double remain_s =
       reference_line.Length() - reference_line_info->AdcSlBoundary().end_s();
+  // ADEBUG << "ZLX: remain_s = " << reference_line.Length() << " - "
+  //        << reference_line_info->AdcSlBoundary().end_s() << " = " << remain_s
+  //        << "\n"
+  //        << remain_s << " > " << config_.min_reference_line_remain_length()
+  //        << "? " << (remain_s > config_.min_reference_line_remain_length());
   if (remain_s > config_.min_reference_line_remain_length()) {
     return Status::OK();
   }

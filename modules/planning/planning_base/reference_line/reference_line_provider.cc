@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "cyber/common/file.h"
+// #include "cyber/common/log.h"
 #include "cyber/plugin_manager/plugin_manager.h"
 #include "cyber/task/task.h"
 #include "cyber/time/clock.h"
@@ -611,6 +612,7 @@ bool ReferenceLineProvider::GetNearestWayPointFromNavigationPath(
 bool ReferenceLineProvider::CreateRouteSegments(
     const common::VehicleState &vehicle_state,
     std::list<hdmap::RouteSegments> *segments) {
+  // AINFO<<"before zlx_create_seg: "<<segments->size();
   {
     std::lock_guard<std::mutex> lock(pnc_map_mutex_);
     if (!current_pnc_map_->GetRouteSegments(vehicle_state, segments)) {
@@ -621,6 +623,7 @@ bool ReferenceLineProvider::CreateRouteSegments(
   for (auto &seg : *segments) {
     ADEBUG << seg.DebugString();
   }
+  // AINFO<<"after zlx_create_seg: "<<segments->size();
   if (FLAGS_prioritize_change_lane) {
     PrioritizeChangeLane(segments);
   }

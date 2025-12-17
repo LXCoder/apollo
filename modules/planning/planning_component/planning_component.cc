@@ -212,25 +212,6 @@ bool PlanningComponent::Proc(
     p.set_relative_time(p.relative_time() + dt);
   }
 
-  AINFO << "zlx trajectory_point_size : "
-        << adc_trajectory_pb.trajectory_point_size();
-  AINFO << "-------------------------------------------";
-  char buf[1024] = {0};
-  for (int i = 0; i < adc_trajectory_pb.trajectory_point_size(); i++) {
-    // printf("%s\n",adc_trajectory_pb.trajectory_point(i).Utf8DebugString().c_str());
-    auto trajectory_point = adc_trajectory_pb.trajectory_point(i);
-    memset(buf, 0x00, sizeof(buf));
-    sprintf(buf,
-            "------------------- %d -----------------------\nv: %.10f m/s --> "
-            "%.3f km/h\na: %.10f m/s^2 --> %.3f km/h^2\n",
-            i, trajectory_point.v(), trajectory_point.v() * 3.6,
-            trajectory_point.a(), trajectory_point.a() * 12960);
-
-    AINFO << buf;
-    AINFO << trajectory_point.Utf8DebugString();
-  }
-  AINFO << "-------------------------------------------\n";
-
   planning_writer_->Write(adc_trajectory_pb);
 
   // Send command execution feedback.

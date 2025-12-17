@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <string>
 
 #include "absl/strings/str_cat.h"
 #include "google/protobuf/text_format.h"
@@ -40,7 +41,7 @@ namespace planning {
 using apollo::common::PointENU;
 using apollo::common::VehicleState;
 using apollo::common::util::PointFactory;
-using apollo::routing::RoutingResponse;
+using apollo::routing::RoutingResponse; 
 
 namespace {
 
@@ -341,15 +342,22 @@ bool LaneFollowMap::PassageToSegments(routing::Passage passage,
                                       hdmap::RouteSegments *segments) const {
   CHECK_NOTNULL(segments);
   segments->clear();
+  // std::string msg = "zlx total size: ";
+  // msg.append(std::to_string(passage.segment_size()));
   for (const auto &lane : passage.segment()) {
     auto lane_ptr = hdmap_->GetLaneById(hdmap::MakeMapId(lane.id()));
     if (!lane_ptr) {
       AERROR << "Failed to find lane: " << lane.id();
       return false;
     }
+    // msg.append(" ,");
+    // msg.append((lane_ptr->id().id()));
     segments->emplace_back(lane_ptr, std::max(0.0, lane.start_s()),
                            std::min(lane_ptr->total_length(), lane.end_s()));
   }
+  // msg.append("   segments size: ");
+  // msg.append(std::to_string(segments->size()));
+  // AINFO << msg;
   return !segments->empty();
 }
 
@@ -438,6 +446,7 @@ bool LaneFollowMap::GetRouteSegments(
   const int road_index = route_index[0];
   const int passage_index = route_index[1];
   const auto &road = last_command_.lane_follow_command().road(road_index);
+  // AINFO << "before zlx_segment size: " << route_segments->size();
   // Raw filter to find all neighboring passages
   auto drive_passages = GetNeighborPassages(road, passage_index);
   for (const int index : drive_passages) {
@@ -466,6 +475,8 @@ bool LaneFollowMap::GetRouteSegments(
       }
     }
     route_segments->emplace_back();
+    // AINFO << "before zlx route_segments lane size: "
+    //       << route_segments->back().size();
     const auto last_waypoint = segments.LastWaypoint();
     if (!ExtendSegments(segments, sl.s() - backward_length,
                         sl.s() + forward_length, &route_segments->back())) {
@@ -474,6 +485,9 @@ bool LaneFollowMap::GetRouteSegments(
              << ", forward: " << forward_length;
       return false;
     }
+    // AINFO << "after zlx route_segments lane size: "
+    //       << route_segments->back().size();
+
     if (route_segments->back().IsWaypointOnSegment(last_waypoint)) {
       route_segments->back().SetRouteEndWaypoint(last_waypoint);
     }
@@ -491,6 +505,7 @@ bool LaneFollowMap::GetRouteSegments(
       route_segments->back().SetPreviousAction(routing::LEFT);
     }
   }
+  // AINFO << "after zlx_segment size: " << route_segments->size();
   return !route_segments->empty();
 }
 
@@ -633,6 +648,8 @@ bool LaneFollowMap::ExtendSegments(
   }
   CHECK_NOTNULL(truncated_segments);
   truncated_segments->SetProperties(segments);
+  // AINFO << "before zlx truncated_segments size: " << truncated_segments->size()
+  //       << " segments size: " << segments.size();
 
   if (start_s >= end_s) {
     AERROR << "start_s(" << start_s << " >= end_s(" << end_s << ")";
@@ -646,26 +663,34 @@ bool LaneFollowMap::ExtendSegments(
     auto lane = first_segment.lane;
     double s = first_segment.start_s;
     double extend_s = -start_s;
+    // AINFO << "extend_s :" << extend_s << ", s: " << s;
     std::vector<hdmap::LaneSegment> extended_lane_segments;
     while (extend_s > kRouteEpsilon) {
       if (s <= kRouteEpsilon) {
+        // std::string current_lane_id = lane->id().id();
         lane = GetRoutePredecessor(lane);
         if (lane == nullptr ||
             unique_lanes.find(lane->id().id()) != unique_lanes.end()) {
           break;
         }
         s = lane->total_length();
+        // AINFO << "zlx lane [ " << current_lane_id << " ] get pre lane [ "
+        //       << lane->id().id() << " ], extern_s: " << extend_s
+        //       << ", s: " << s;
       } else {
         const double length = std::min(s, extend_s);
         extended_lane_segments.emplace_back(lane, s - length, s);
         extend_s -= length;
         s -= length;
+        // AINFO << "insert lane: [ " << lane->id().id()
+        //       << " ], extern_s: " << extend_s << ", s: " << s;
         unique_lanes.insert(lane->id().id());
       }
     }
     truncated_segments->insert(truncated_segments->begin(),
                                extended_lane_segments.rbegin(),
                                extended_lane_segments.rend());
+    // AINFO << "zlx zhongtu1 size: " << truncated_segments->size();
   }
   bool found_loop = false;
   double router_s = 0;
@@ -683,6 +708,8 @@ bool LaneFollowMap::ExtendSegments(
                  unique_lanes.end()) {
         truncated_segments->emplace_back(lane_segment.lane, adjusted_start_s,
                                          adjusted_end_s);
+        // AINFO << "zlx zhongtu2 insert lane" << lane_segment.lane->id().id()
+        //       << ", size: " << truncated_segments->size();
         unique_lanes.insert(lane_segment.lane->id().id());
       } else {
         found_loop = true;
@@ -709,16 +736,36 @@ bool LaneFollowMap::ExtendSegments(
   }
   auto last_lane = segments.back().lane;
   while (router_s < end_s - kRouteEpsilon) {
+    // std::string current_lane_id = last_lane->id().id();
     last_lane = GetRouteSuccessor(last_lane);
     if (last_lane == nullptr ||
         unique_lanes.find(last_lane->id().id()) != unique_lanes.end()) {
+      // if (last_lane == nullptr) {
+      //   AINFO << "current lane id: " << current_lane_id << " no successor";
+      // } else {
+      //   AINFO << last_lane->id().id() << " exist unique lanes";
+      // }
       break;
     }
+    // AINFO << "current lane id: " << current_lane_id
+    //       << ", successor lane id: " << last_lane->id().id();
     const double length = std::min(end_s - router_s, last_lane->total_length());
     truncated_segments->emplace_back(last_lane, 0, length);
+    // AINFO << "insert lane [ " << last_lane->id().id() << " ], "
+    //       << "zlx zhongtu3 size: " << truncated_segments->size();
     unique_lanes.insert(last_lane->id().id());
     router_s += length;
+    // AINFO << "router_s: " << router_s << ", end_s: " << end_s
+    //       << ", end_s - kRouteEpsilon: " << end_s - kRouteEpsilon
+    //       << ", flag: " << (router_s < end_s - kRouteEpsilon);
   }
+  // std::string ids;
+  // for (auto &item : *truncated_segments) {
+  //   ids.append(item.lane->road_id().id());
+  //   ids.append(", ");
+  // }
+  // AINFO << "after zlx truncated_segments size: " << truncated_segments->size()
+  //       << ", " << ids;
   return true;
 }
 

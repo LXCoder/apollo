@@ -397,6 +397,7 @@ bool SpeedDecider::CreateFollowDecision(
     const Obstacle& obstacle, ObjectDecisionType* const follow_decision) const {
   const double follow_speed = init_point_.v();
   const double follow_distance_s = -EstimateProperFollowGap(follow_speed);
+  // const double follow_distance_s = 0;
 
   const auto& boundary = obstacle.path_st_boundary();
   const double reference_s =
